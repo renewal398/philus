@@ -699,53 +699,26 @@
     // Save wish to text file
     function saveWishToFile(wishText) {
       const timestamp = new Date().toLocaleString();
-      const wishEntry = `[${timestamp}] ${wishText}\n`;
       
-      // Create a blob with the wish text
-      const blob = new Blob([wishEntry], { type: 'text/plain' });
-      
-      // Check if we can use the File System Access API
-      if ('showSaveFilePicker' in window) {
-        // Modern browser with File System Access API
-        saveWithFileSystemAPI(wishEntry);
-      } else {
-        // Fallback: trigger download
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'wishes.txt';
-        a.click();
-        URL.revokeObjectURL(url);
-      }
+      // Send wish to server
+      fetch('submit_wish.php', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: `wish=${encodeURIComponent(wishText)}&timestamp=${encodeURIComponent(timestamp)}`
+      })
+      .then(response => response.text())
+      .then(data => {
+        console.log('Wish saved:', data);
+      })
+      .catch(error => {
+        console.error('Error saving wish:', error);
+      });
     }
 
     async function saveWithFileSystemAPI(wishEntry) {
-      try {
-        // This will prompt user once to select/create wishes.txt
-        const handle = await window.showSaveFilePicker({
-          suggestedName: 'wishes.txt',
-          types: [{
-            description: 'Text Files',
-            accept: { 'text/plain': ['.txt'] }
-          }]
-        });
-        
-        const writable = await handle.createWritable();
-        
-        // Try to read existing content first
-        try {
-          const file = await handle.getFile();
-          const existingContent = await file.text();
-          await writable.write(existingContent);
-        } catch (e) {
-          // File doesn't exist yet, that's okay
-        }
-        
-        await writable.write(wishEntry);
-        await writable.close();
-      } catch (err) {
-        console.log('File save cancelled or error:', err);
-      }
+      // This function is no longer needed
     }
   </script>
 </body>
